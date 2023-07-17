@@ -5,7 +5,7 @@ These examples are written in Python using [Flask] and [requests] (two popular l
 
 > **Note**
 > These examples are deliberately simplified to be readable and understandable by a broad audience.
-> They are intended to help developers learn how to use the Voltus API: this should not be considered "production ready" code!
+> They are intended to help developers learn how to use the Voltus API: nothing in this repository should be considered "production ready" code!
 
 To run these examples, we recommend using [virtualenv], which allows you to install
 the above libraries without affecting the rest of your system.
