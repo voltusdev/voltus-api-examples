@@ -8,7 +8,7 @@ import requests
 from dateutil import parser as date_parser
 from flask import Flask, request
 
-VOLTUS_API_URL = os.getenv("VOLTUS_API_URL", "https://sandbox.voltus.co")
+VOLTUS_API_URL = os.getenv("VOLTUS_API_URL", "https://api.voltus.co")
 VOLTUS_API_KEY = os.getenv("VOLTUS_API_KEY", "secret")
 
 
