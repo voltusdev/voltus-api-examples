@@ -28,7 +28,6 @@ def get_dispatch_info(url: str):
 
 
 def dispatch_program(command: str, dispatch_info: Dict):
-    ## TODO - shares function with all docs
     dispatch_info["start_time"] = date_parser.parse(dispatch_info["start_time"])
     if "end_time" in dispatch_info and dispatch_info["end_time"] is not None:
         dispatch_info["end_time"] = date_parser.parse(dispatch_info["end_time"])
