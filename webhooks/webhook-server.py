@@ -39,7 +39,11 @@ def dispatch_program(command: str, dispatch_info: Dict):
         return create_dispatch(dispatch_info)
     else:
         now = datetime.datetime.now(datetime.timezone.utc)
-        if dispatch_info["end_time"] < now or not dispatch_info["authorized"]:
+        if (
+            (dispatch_info.get("end_time") and dispatch_info["end_time"] < now)
+            or dispatch_info["cancelled"]
+            or not dispatch_info["authorized"]
+        ):
             return cancel_dispatch(dispatch_info)
         else:
             return update_dispatch(dispatch_info)
