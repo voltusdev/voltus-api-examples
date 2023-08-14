@@ -82,7 +82,6 @@ while True:
         if (
             (dispatch_info.get("end_time") and dispatch_info["end_time"] < now)
             or not dispatch_info["authorized"]
-            or dispatch_info.get("cancelled")
             and dispatch_id not in cancelled_dispatches
         ):
             cancel_dispatch(dispatch_info)
