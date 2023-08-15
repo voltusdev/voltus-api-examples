@@ -76,24 +76,23 @@ if __name__ == "__main__":
             dispatch_id = dispatch_info["id"]
             now = datetime.datetime.now(datetime.timezone.utc)
 
+            # if we've already cancelled this dispatch, skip it
+            if dispatch_id in cancelled_dispatches:
+                continue
+
             # send a cancelled message if the dispatch is over or not authorized
             # regardless of whether we know about it or not (to protect against
             # this service restarting or similar), as long as it has not been
             # previously marked as cancelled
             if (
-                (dispatch_info.get("end_time") and dispatch_info["end_time"] < now)
-                or not dispatch_info["authorized"]
-                and dispatch_id not in cancelled_dispatches
-            ):
+                dispatch_info.get("end_time") and dispatch_info["end_time"] < now
+            ) or not dispatch_info["authorized"]:
                 cancel_dispatch(dispatch_info)
                 del managed_dispatches[dispatch_id]
                 cancelled_dispatches.add(dispatch_id)
                 continue
 
-            if (
-                dispatch_id not in managed_dispatches
-                and dispatch_id not in cancelled_dispatches
-            ):
+            if dispatch_id not in managed_dispatches:
                 managed_dispatches[dispatch_id] = dispatch_info
                 create_dispatch(dispatch_info)
             else:

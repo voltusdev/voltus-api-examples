@@ -42,9 +42,7 @@ if __name__ == "__main__":
                 if end_time is None or end_time >= now:
                     processed_dispatches.add(dispatch_info["id"])
                     print("Dispatch {} is in progress".format(dispatch_info["id"]))
-                    if dispatch_info["authorized"] and not dispatch_info.get(
-                        "cancelled"
-                    ):
+                    if dispatch_info["authorized"]:
                         for site in dispatch_info["sites"]:
                             print(
                                 "- Customer location {} should drop by {}".format(
