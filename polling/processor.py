@@ -1,5 +1,7 @@
 """
 Simplified polling processor which gets dispatches then waits to see if they're in progress
+
+Precursor to the more sophisticated poller.py
 """
 
 import datetime
