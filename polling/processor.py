@@ -24,28 +24,34 @@ resp = s.get(url)
 dispatches = resp.json()["dispatches"]
 
 
-while True:
-    for dispatch_info in dispatches:
-        if dispatch_info["id"] in processed_dispatches:
-            continue
-        start_time = date_parser.parse(dispatch_info["start_time"])
-        end_time = (
-            date_parser.parse(dispatch_info["end_time"])
-            if dispatch_info.get("end_time")
-            else None
-        )
-        now = datetime.datetime.now(datetime.timezone.utc)
-        if start_time <= now and (end_time is None or end_time >= now):
-            processed_dispatches.add(dispatch_info["id"])
-            print("Dispatch {} is in progress".format(dispatch_info["id"]))
-            if dispatch_info["authorized"] and not dispatch_info.get("cancelled"):
-                for site in dispatch_info["sites"]:
-                    print(
-                        "- Customer location {} should drop by {}".format(
-                            site["customer_location_id"], site["drop_by"]
-                        )
-                    )
-            else:
-                print("- Dispatch is not authorized or is cancelled, skipping")
+if __name__ == "__main__":
+    while True:
+        for dispatch_info in dispatches:
+            if dispatch_info["id"] in processed_dispatches:
+                continue
+            start_time = date_parser.parse(dispatch_info["start_time"])
+            end_time = (
+                date_parser.parse(dispatch_info["end_time"])
+                if dispatch_info.get("end_time")
+                else None
+            )
+            now = datetime.datetime.now(datetime.timezone.utc)
+            if start_time <= now:
+                if end_time is None or end_time >= now:
+                    processed_dispatches.add(dispatch_info["id"])
+                    print("Dispatch {} is in progress".format(dispatch_info["id"]))
+                    if dispatch_info["authorized"] and not dispatch_info.get(
+                        "cancelled"
+                    ):
+                        for site in dispatch_info["sites"]:
+                            print(
+                                "- Customer location {} should drop by {}".format(
+                                    site["customer_location_id"], site["drop_by"]
+                                )
+                            )
+                    else:
+                        print("- Dispatch is not authorized or is cancelled, skipping")
+                else:
+                    print("Dispatch {} has ended".format(dispatch_info["id"]))
 
-    time.sleep(1)
+        time.sleep(1)
