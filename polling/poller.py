@@ -88,18 +88,17 @@ if __name__ == "__main__":
                 dispatch_info.get("end_time") and dispatch_info["end_time"] < now
             ) or not dispatch_info["authorized"]:
                 cancel_dispatch(dispatch_info)
-                del managed_dispatches[dispatch_id]
                 cancelled_dispatches.add(dispatch_id)
-                continue
-
-            if dispatch_id not in managed_dispatches:
-                managed_dispatches[dispatch_id] = dispatch_info
+                managed_dispatches.pop(dispatch_id, None)
+            # if this dispatch hasn't been seen before, create it
+            elif dispatch_id not in managed_dispatches:
                 create_dispatch(dispatch_info)
+                managed_dispatches[dispatch_id] = dispatch_info
+            # otherwise, update it
             else:
-                # if the dispatch has changed, update it
                 if managed_dispatches[dispatch_id] != dispatch_info:
-                    managed_dispatches[dispatch_id].update(dispatch_info)
                     update_dispatch(dispatch_info)
+                    managed_dispatches[dispatch_id].update(dispatch_info)
 
         # sleep for 30 seconds minus however long it took to process the dispatches
         elapsed = datetime.datetime.now(datetime.timezone.utc) - start_time
