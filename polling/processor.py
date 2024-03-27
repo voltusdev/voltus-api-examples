@@ -45,8 +45,8 @@ if __name__ == "__main__":
                     if dispatch_info["authorized"]:
                         for site in dispatch_info["sites"]:
                             print(
-                                "- Customer location {} should drop by {}".format(
-                                    site["customer_location_id"], site["drop_by"]
+                                "- Customer location {} should curtail. Commitment: {} kW".format(
+                                    site["customer_location_id"], site["commitment"]
                                 )
                             )
                     else:
