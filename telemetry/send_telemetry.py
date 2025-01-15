@@ -47,7 +47,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if VOLTUS_API_KEY is None:
-        sys.stderr.write("VOLTUS_API_KEY environment variable is unset")
+        sys.stderr.write("VOLTUS_API_KEY environment variable is unset\n")
         sys.exit(1)
 
     telemetry_type = sys.argv[1]
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         url = f"{VOLTUS_API_URL}/telemetry/controllable-load"
         reading_class = ControllableLoadReading
     else:
-        sys.stderr.write("Invalid telemetry type. Must be 'telemetry' or 'controllable_load'")
+        sys.stderr.write("Invalid telemetry type. Must be 'telemetry' or 'controllable_load'\n")
         sys.exit(1)
 
     # Create a telemetry reading object
