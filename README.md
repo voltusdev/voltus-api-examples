@@ -3,7 +3,7 @@
 Examples of using the [Voltus API].
 These examples are written in Python using [Flask] and [requests] (two popular libraries for writing web servers and making HTTP requests, respectively).
 
-> **Note**
+> [!NOTE]
 > These examples are deliberately simplified to be readable and understandable by a broad audience.
 > They are intended to help developers learn how to use the Voltus API and should not be considered "production ready".
 
@@ -30,7 +30,7 @@ After that, you should be able to run the examples. For example:
 
 ```
 cd polling
-python dispatch-polling-stage2.py
+python poller.py
 ```
 
 [Voltus API]: https://api.voltus.co/docs/
