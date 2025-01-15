@@ -43,7 +43,7 @@ def _send_telemetry(url: str, datatype: str, readings: Union[List[TelemetryReadi
 
 if __name__ == "__main__":
     if len(sys.argv) < 7:
-        sys.stderr.write("Usage: python send_telemetry.py <telemetry_type> <interval_seconds> <meter_id> <timestamp> <units> <value>")
+        sys.stderr.write("Usage: python send_telemetry.py <telemetry_type> <interval_seconds> <meter_or_site_id> <timestamp> <units> <value>")
         sys.exit(1)
 
     if VOLTUS_API_KEY is None:
