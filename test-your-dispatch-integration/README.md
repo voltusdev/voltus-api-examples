@@ -5,5 +5,5 @@ The notebook is visible from https://api.voltus.co/docs/tutorials/test-your-disp
 To run locally, install uv and run:
 
 ```
-uv run marimo edit test-your-dispatch-integration.py --watch
+uvx marimo edit test-your-dispatch-integration.py --watch --sandbox
 ```

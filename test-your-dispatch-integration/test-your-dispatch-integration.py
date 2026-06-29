@@ -1,16 +1,15 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "altair==5.4.1",
-#     "marimo",
-#     "numpy==2.3.2",
-#     "pandas==2.3.2",
+#     "altair==6.2.2",
+#     "marimo>=0.23.11",
+#     "numpy==2.4.6",
+#     "pandas==3.0.3",
 #     "python-dateutil==2.9.0.post0",
-#     "pytz==2025.2",
-#     "requests==2.32.5",
+#     "pytz==2026.2",
+#     "requests==2.34.2",
 # ]
 # ///
-
 import marimo
 
 __generated_with = "0.23.11"
@@ -1587,6 +1586,7 @@ def get_charts():
             add_annotation(ts["published_time"], f"Publish Time {i + 1}", "Publish Time")
 
         annotations_df = pd.DataFrame(annotations, columns=["time", "label", "type", "dispatch"])
+        annotations_df = annotations_df.fillna('')
 
         # Get annotations grouped by time in format of:
         # {
