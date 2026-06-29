@@ -1,0 +1,13 @@
+[project]
+name = "test-your-dispatch-integration"
+version = "1.0.0"
+description = "Marimo notebook for testing Voltus API integrations"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "marimo[recommended]>=0.23.11",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "python-dateutil>=2.9.0.post0",
+    "pytz>=2026.2",
+]
