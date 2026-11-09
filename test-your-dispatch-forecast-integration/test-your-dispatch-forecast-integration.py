@@ -8,9 +8,10 @@
 #     "pytz==2026.2",
 # ]
 # ///
+
 import marimo
 
-__generated_with = "0.23.11"
+__generated_with = "0.25.2"
 app = marimo.App(width="columns")
 
 with app.setup(hide_code=True):
@@ -99,7 +100,6 @@ with app.setup(hide_code=True):
 
     DISPATCH_FORECAST_TUTORIAL_URL = "https://api.voltus.co/docs/"  # Placeholder until the dispatch forecast tutorial is published
     SANDBOX_URL = "https://sandbox.voltus.co/2022-04-15"
-    PUBLIC_API_KEY = "secret"
 
     default_tick_interval = 10
     default_site_id = "kd1k"
@@ -121,10 +121,10 @@ with app.setup(hide_code=True):
         value=default_site_customer_location_id,
         full_width=True,
     )
-    program_1_name_input = mo.ui.text(label="Program 1 Name", value="A Program", full_width=True)
-    program_1_id_input = mo.ui.number(label="Program 1 ID", value=5555, full_width=True)
-    program_2_name_input = mo.ui.text(label="Program 2 Name", value="A Different Program", full_width=True)
-    program_2_id_input = mo.ui.number(label="Program 2 ID", value=1111, full_width=True)
+    program_1_name_input = mo.ui.text(label="Program 1 Name", value="Program One", full_width=True)
+    program_1_id_input = mo.ui.number(label="Program 1 ID", value=1, full_width=True)
+    program_2_name_input = mo.ui.text(label="Program 2 Name", value="Program Two", full_width=True)
+    program_2_id_input = mo.ui.number(label="Program 2 ID", value=2, full_width=True)
 
     notification_time_input = mo.ui.text(placeholder="2020-12-30T13:00:00Z", full_width=True)
     set_now_notification_time_button = mo.ui.run_button(label="Set Notification Time To Now")
@@ -132,11 +132,21 @@ with app.setup(hide_code=True):
 
 
 @app.cell(hide_code=True)
+def _():
+    mo.md(f"""
+    Use these scenarios to test how your EMS handles dispatch forecasts in the sandbox. For an overview of how to use dispatch forecasts in your EMS, see the [Voltus API documentation]({DISPATCH_FORECAST_TUTORIAL_URL}).
+
+    **Before you start**: You need a sandbox API key for `sandbox.voltus.co`. If you don't have one, email your Voltus Account Manager or Project Engineer. Use it in place of `{default_api_key}` in the example curl requests below.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
 def _(inputs):
     mo.md(f"""
-    <h1 style="margin-top: 0">Customization</h1>
+    <h1>Customization</h1>
 
-    To customize test scenarios below, modify the following fields
+    To customize test scenarios below, modify the following fields:
 
     {inputs}
     """)
@@ -144,50 +154,21 @@ def _(inputs):
 
 
 @app.cell(hide_code=True)
-def _():
-    mo.md(f"""
-    # Step 1: Get a Sandbox Key
-
-    Email your Voltus Account Manager or Project Engineer to get a Sandbox API key for use with `sandbox.voltus.co`.
-
-    Use this key in place of `{default_api_key}` in the example curl requests below.
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(code_block):
-    mo.md(f"""
-    # Step 2: Look at a Forecast
-
-    Anyone can read an example forecast from `sandbox.voltus.co` with the public API key `{PUBLIC_API_KEY}`, without creating a scenario:
-
-    {code_block(get_curl(f"{SANDBOX_URL}/dispatch_forecasts", {"X-Voltus-API-Key": PUBLIC_API_KEY}), type="sh")}
-
-    The response has one forecast series for each site and program: one interval per hour for the next 48 hours, each with a `likelihood` from 0 to 1.
-
-    For how to use dispatch forecasts in your EMS, see the [Voltus API documentation]({DISPATCH_FORECAST_TUTORIAL_URL}).
-    """)
-    return
-
-
-@app.cell(hide_code=True)
 def _(FORECAST_SCENARIOS, display_scenarios, tick_interval):
-    mo.md(f"""
-    # Step 3: Sandbox Forecast Scenarios
+    mo.vstack([mo.md(f"""
+    # Forecast Scenarios
 
-    Each scenario below combines dispatch forecasts with dispatches. Create it with your sandbox key via the `POST scenario` endpoint, using the provided curl request. Then poll `GET /dispatch_forecasts` and `GET /dispatches` while the scenario plays out, and check that your EMS does what the scenario expects.
+    Each scenario below combines dispatch forecasts with dispatches. Create it via the `POST /scenarios` endpoint, using the provided curl request and your sandbox API key. Then poll `GET /dispatch_forecasts` and `GET /dispatches` while the scenario plays out, and check that your EMS does what the scenario expects.
 
-    **How the forecast changes**: A scenario holds a list of forecast updates, each with a `published_time`. `GET /dispatch_forecasts` returns, for each site and program, the latest update published by now. Hours an update doesn't cover read 0, and hours covered by a published dispatch in the same program read 1.
+    A scenario holds a list of forecast updates, each with a `published_time`. `GET /dispatch_forecasts` returns, for each site and program, the latest update published before the request time.
+    The forecasts returned in this sandbox have the same characteristics as those in production. If the scenario has a dispatch for a given site and program, the forecast has a dispatch likelihood of 1 for every interval overlapping the dispatch. Intervals with no forecast have a dispatch likelihood of 0.
 
-    **Time is compressed**: Forecast intervals are real hours, but updates are published {tick_interval} minutes apart (the Tick Interval above), so you see the forecast change within one sitting. Dispatches start on the hour, up to a few hours after you create the scenario.
-
-    **Passing the tests**: You must monitor your systems to ensure they meet the expected result for each scenario. Voltus will not be able to monitor the output of your system.
+    Forecast intervals are hourly, but these scenarios include updates to the forecasts that are published {tick_interval} minutes apart (configurable with the Tick Interval above), so you can see the forecast change while testing. Dispatches start up to a few hours after you create the scenario.
 
     **Tip**: Scenario times are based on the Notification Time above. Set it to now right before you create a scenario. When you POST a scenario, the previous scenario is overwritten, so to restart a scenario, set the Notification Time to now and POST it again.
 
-    {display_scenarios(FORECAST_SCENARIOS)}
-    """)
+    **Passing the tests**: You must monitor your systems to ensure they meet the expected result for each scenario. Voltus will not be able to monitor the output of your system.
+    """), display_scenarios(FORECAST_SCENARIOS)])
     return
 
 
@@ -282,14 +263,14 @@ def define_scenarios():
             },
         }
 
-    def get_dispatch(published_time, start_time, hours, program):
+    def get_dispatch(published_time, start_time, end_time, program):
         return {
             "states": [
                 get_dispatch_state(
                     published_time=published_time,
                     creation_time=published_time,
                     start_time=start_time,
-                    end_time=start_time + timedelta(hours=hours),
+                    end_time=end_time,
                     program=program,
                 )
             ]
@@ -332,37 +313,39 @@ def define_scenarios():
 
     T = NOTIFICATION_TIME
 
-    firm_up_dispatch_published = T + 3 * tick
-    firm_up_block = get_hour_starts(ceil_utc_hour(firm_up_dispatch_published) + timedelta(hours=1), 2)
-    firm_up_window = get_window_hour_starts(firm_up_block[-1] + timedelta(hours=1))
+    test_one_dispatch_published = T + 3 * tick
+    test_one_block = get_hour_starts(ceil_utc_hour(test_one_dispatch_published) + timedelta(hours=1), 2)
+    test_one_window = get_window_hour_starts(test_one_block[-1] + timedelta(hours=1))
 
-    false_alarm_block = get_hour_starts(ceil_utc_hour(T + 2 * tick) + timedelta(hours=1), 2)
-    false_alarm_window = get_window_hour_starts(false_alarm_block[-1] + timedelta(hours=1))
+    test_two_block = get_hour_starts(ceil_utc_hour(T + 2 * tick) + timedelta(hours=1), 2)
+    test_two_window = get_window_hour_starts(test_two_block[-1] + timedelta(hours=1))
 
-    two_programs_block_1 = get_hour_starts(ceil_utc_hour(T + 2 * tick) + timedelta(hours=1), 1)
-    two_programs_block_2 = get_hour_starts(two_programs_block_1[-1] + timedelta(hours=3), 1)
-    two_programs_window = get_window_hour_starts(two_programs_block_2[-1] + timedelta(hours=1))
+    test_three_block_1 = get_hour_starts(ceil_utc_hour(T + 2 * tick) + timedelta(hours=1), 1)
+    test_three_block_2 = get_hour_starts(test_three_block_1[-1] + timedelta(hours=3), 1)
+    test_three_window = get_window_hour_starts(test_three_block_2[-1] + timedelta(hours=1))
 
-    zero_forecast_dispatch_start = ceil_utc_hour(T + tick)
-    zero_forecast_window = get_window_hour_starts(zero_forecast_dispatch_start + timedelta(hours=1))
+    test_four_dispatch_start = ceil_utc_hour(T + tick)
+    test_four_window = get_window_hour_starts(test_four_dispatch_start + timedelta(hours=1))
 
     FORECAST_SCENARIOS = [
         {
-            "name": "Forecast Test 1. Forecast Firms Up, Then a Dispatch",
+            "name": "Forecast Test 1: Forecast Precedes a Dispatch",
             "description": f"""
-                The likelihood of a dispatch in a two-hour block rises with each forecast update, then a dispatch covering the block is published.
+                The likelihood of a dispatch in a two-hour block rises with each forecast update, then a dispatch overlapping the block is published.
 
-                API Behavior: Forecast updates are published {tick_interval} minutes apart, with a likelihood of 0.2, then 0.5, then 0.8 for the block. {tick_interval} minutes after the last update, a dispatch for the block is published, and `GET /dispatch_forecasts` reads 1 for those hours.
+                API Behavior: Forecast updates are published {tick_interval} minutes apart, with a likelihood of 0.2, then 0.5, then 0.8 for the block. {tick_interval} minutes after the last update, a dispatch is published overlapping the block's first and second hours. At that point, the dispatch forecast reads 1 for both hours, since the dispatch overlaps each of them.
                 """,
             "expected_result_description": """
                 Your EMS prepares for the block as the likelihood rises, for example by charging the battery. It discharges only once the dispatch appears in `GET /dispatches`, and only for the dispatch's start and end times.
                 """,
             "sites": [SITE],
-            "dispatch_forecasts": get_block_forecasts([T, T + tick, T + 2 * tick], [0.2, 0.5, 0.8], PROGRAM_1, firm_up_block, firm_up_window),
-            "dispatches": {"Dispatch": get_dispatch(firm_up_dispatch_published, firm_up_block[0], 2, PROGRAM_1)},
+            "dispatch_forecasts": get_block_forecasts([T, T + tick, T + 2 * tick], [0.2, 0.5, 0.8], PROGRAM_1, test_one_block, test_one_window),
+            "dispatches": {
+                "Dispatch": get_dispatch(test_one_dispatch_published, test_one_block[0] + timedelta(minutes=25), test_one_block[0] + timedelta(minutes=65), PROGRAM_1)
+            },
         },
         {
-            "name": "Forecast Test 2. False Alarm",
+            "name": "Forecast Test 2: False Alarm",
             "description": f"""
                 The likelihood of a dispatch in a two-hour block rises and stays high, but no dispatch is published.
 
@@ -372,43 +355,53 @@ def define_scenarios():
                 Your EMS may prepare for the block, for example by charging the battery, but never discharges for it. A high likelihood is not a dispatch.
                 """,
             "sites": [SITE],
-            "dispatch_forecasts": get_block_forecasts([T, T + tick, T + 2 * tick], [0.3, 0.6, 0.8], PROGRAM_1, false_alarm_block, false_alarm_window),
+            "dispatch_forecasts": get_block_forecasts([T, T + tick, T + 2 * tick], [0.3, 0.6, 0.8], PROGRAM_1, test_two_block, test_two_window),
             "dispatches": {},
         },
         {
-            "name": "Forecast Test 3. Two Programs on One Site",
+            "name": "Forecast Test 3: Two Programs on One Site",
             "description": f"""
                 Two programs forecast a likely dispatch on the same site, an hour each, with two hours between them. A dispatch is then published for each.
 
-                API Behavior: At the notification time, one forecast is published for each program, with a likelihood of 0.7 for that program's hour. `GET /dispatch_forecasts` returns one series per program. {tick_interval} minutes later, a dispatch in Program 1 is published for its hour, and {tick_interval} minutes after that, a dispatch in Program 2 is published for its hour. Each reads 1 for its hour in its own program's series.
+                API Behavior: At the notification time, one forecast is published for each program, with a likelihood of 0.7 for that program's hour. `GET /dispatch_forecasts` returns one series per program. {tick_interval} minutes later, a dispatch in Program 1 is published for 15 to 45 minutes past its hour, and {tick_interval} minutes after that, a dispatch in Program 2 is published for the whole of its hour. Each reads 1 for its hour in its own program's series.
                 """,
             "expected_result_description": """
                 Your EMS takes both programs' forecasts into account. The battery participates in both dispatches and recharges in the two hours between them.
                 """,
             "sites": [SITE],
-            "dispatch_forecasts": get_block_forecasts([T], [0.7], PROGRAM_1, two_programs_block_1, two_programs_window)
-            + get_block_forecasts([T], [0.7], PROGRAM_2, two_programs_block_2, two_programs_window),
+            "dispatch_forecasts": get_block_forecasts([T], [0.7], PROGRAM_1, test_three_block_1, test_three_window)
+            + get_block_forecasts([T], [0.7], PROGRAM_2, test_three_block_2, test_three_window),
             "dispatches": {
-                "Dispatch 1": get_dispatch(T + tick, two_programs_block_1[0], 1, PROGRAM_1),
-                "Dispatch 2": get_dispatch(T + 2 * tick, two_programs_block_2[0], 1, PROGRAM_2),
+                "Dispatch 1": get_dispatch(T + tick, test_three_block_1[0] + timedelta(minutes=15), test_three_block_1[0] + timedelta(minutes=45), PROGRAM_1),
+                "Dispatch 2": get_dispatch(T + 2 * tick, test_three_block_2[0], test_three_block_2[0] + timedelta(hours=1), PROGRAM_2),
             },
         },
         {
-            "name": "Forecast Test 4. Dispatch With a Zero Forecast",
+            "name": "Forecast Test 4: Dispatch With a Zero Forecast",
             "description": f"""
                 The forecast says a dispatch is unlikely, then a dispatch is published anyway.
 
-                API Behavior: At the notification time, a forecast is published with a likelihood of 0 for every hour. {tick_interval} minutes later, a dispatch for the next whole hour is published, and `GET /dispatch_forecasts` reads 1 for that hour.
+                API Behavior: At the notification time, a forecast is published with a likelihood of 0 for every hour. {tick_interval} minutes later, a 30-minute dispatch starting 10 minutes into the next whole hour is published, and `GET /dispatch_forecasts` reads 1 for that hour.
                 """,
             "expected_result_description": """
                 Your EMS responds to the dispatch as it would without a forecast. Dispatches are the source of truth, whatever the forecast said.
                 """,
             "sites": [SITE],
-            "dispatch_forecasts": [get_dispatch_forecast(T, PROGRAM_1, zero_forecast_window, {})],
-            "dispatches": {"Dispatch": get_dispatch(T + tick, zero_forecast_dispatch_start, 1, PROGRAM_1)},
+            "dispatch_forecasts": [get_dispatch_forecast(T, PROGRAM_1, test_four_window, {})],
+            "dispatches": {
+                "Dispatch": get_dispatch(T + tick, test_four_dispatch_start + timedelta(minutes=10), test_four_dispatch_start + timedelta(minutes=40), PROGRAM_1)
+            },
         },
     ]
-    return FORECAST_SCENARIOS, HEADERS, METHOD, SITE, URL, inputs, tick_interval
+    return (
+        FORECAST_SCENARIOS,
+        HEADERS,
+        METHOD,
+        SITE,
+        URL,
+        inputs,
+        tick_interval,
+    )
 
 
 @app.cell(hide_code=True)
@@ -443,8 +436,6 @@ def _(HEADERS, METHOD, SITE, URL, get_forecast_charts, get_timeline):
             margin-top:0px !important;
             margin-bottom:0px !important;
             margin-block: 0px;
-        }
-        pre:not(.custom-code-block) {
             background-color: #f6f8fa;
         }
         .scroll-container pre {
@@ -467,69 +458,46 @@ def _(HEADERS, METHOD, SITE, URL, get_forecast_charts, get_timeline):
     """
 
     def display_scenario(scenario):
-        time_details = "\n".join(f"- {to_readable_time(time, seconds=False)}: {', '.join(labels)}" for time, labels in get_timeline(scenario).items())
+        timeline = "\n".join(f"- {to_readable_time(time, seconds=False)}: {', '.join(labels)}" for time, labels in get_timeline(scenario).items())
 
         curl = scenario_to_curl(scenario, URL, HEADERS, METHOD).replace("\n", " ")
         get_headers = {"X-Voltus-API-Key": default_api_key}
         forecasts_curl = get_curl(f"{SANDBOX_URL}/dispatch_forecasts?site_id={SITE['id']}", get_headers)
         dispatches_curl = get_curl(f"{SANDBOX_URL}/dispatches", get_headers)
 
-        checking_description = f"""
-    Poll the forecast while the scenario plays out. Each response should match the chart above at that time:
-
-    {code_block(forecasts_curl, type="sh")}
-    """
+        checking = [
+            "Poll the forecast while the scenario plays out. Each response should match the chart above at that time:",
+            textwrap.dedent(code_block(forecasts_curl, type="sh")),
+        ]
         if scenario["dispatches"]:
-            checking_description += f"""
-    Once a dispatch is published, it is also returned by `GET /dispatches`:
+            checking += [
+                "Once a dispatch is published, it is also returned by `GET /dispatches`:",
+                textwrap.dedent(code_block(dispatches_curl, type="sh")),
+            ]
 
-    {code_block(dispatches_curl, type="sh")}
-    """
-
-        return f"""{style}
-
-    **Description**
-
-    {textwrap.dedent(scenario["description"])}
-
-
-    /// details | Details
-
-    {code_block_no_background(time_details)}
-
-    ///
-
-    Each line is what one forecast update gives each hour. Once a dispatch is published, its shaded hours read 1.
-
-    {mo.as_html(get_forecast_charts(scenario))}
-
-    **Expected Result**
-
-    {textwrap.dedent(scenario["expected_result_description"])}
-
-
-    **Creating the Test**
-
-    {scrollable_code_block(curl, type="sh", height=250)}
-
-    **Checking the Results**
-
-    {checking_description}
-    """
+        # Sections are joined unindented: a multi-line value inside an indented template breaks the markdown.
+        sections = [
+            style,
+            "**Description**",
+            textwrap.dedent(scenario["description"]).strip(),
+            timeline,
+            "Each line is what one forecast update gives each hour. The shaded span is the dispatch: once it's published, every hour it overlaps reads 1.",
+            mo.as_html(get_forecast_charts(scenario)).text,
+            "**Expected Result**",
+            textwrap.dedent(scenario["expected_result_description"]).strip(),
+            "**Creating the Test**",
+            scrollable_code_block(curl, type="sh", height=250),
+            f"/// details | Request payload\n\n```json\n{scenario_to_json_payload(scenario)}\n```\n\n///",
+            "**Checking the Results**",
+            *checking,
+        ]
+        return "\n\n".join(sections)
 
     def display_scenarios(scenarios):
-        return f"""
-
-    {
-            mo.accordion(
-                {f"<h2 class='inline'>{scenario['name']}</h2>": make_text_black(display_scenario(scenario)) for scenario in scenarios},
-                multiple=True,
-            )
-        }
-        """
-
-    def code_block_no_background(md_string):
-        return f"""<pre class='custom-code-block'>{md_string}</pre>"""
+        return mo.accordion(
+            {f"<h2 class='inline'>{scenario['name']}</h2>": make_text_black(display_scenario(scenario)) for scenario in scenarios},
+            multiple=True,
+        )
 
     def make_text_black(string):
         return f"""<div style="color: black">
@@ -555,13 +523,11 @@ def _(HEADERS, METHOD, SITE, URL, get_forecast_charts, get_timeline):
         return mo.as_html(mo.md(string)).text
 
     def scrollable_code_block(string, type, height=200):
-        # md.accordion removes the line breaks in code blocks. But we decided we like this more visually anyways.
-        # If we change our minds, we can try `mo.md(f'{mo.md(block).text}')` from this ticket https://github.com/marimo-team/marimo/issues/6363
         return scrollable_block(code_block(string, type), height=height)
 
     # Add the style here, so other cells render it
     mo.md(style)
-    return code_block, display_scenarios
+    return (display_scenarios,)
 
 
 @app.cell(hide_code=True)
@@ -625,22 +591,22 @@ def get_forecast_charts():
             for time in sorted(likelihoods["time"].unique())
         ]
 
-        dispatched_hours = pd.DataFrame(
+        dispatches = pd.DataFrame(
             [
                 {
-                    "hour_start": floor_utc_hour(state["dispatch"]["start_time"]),
-                    "hour_end": ceil_utc_hour(state["dispatch"]["end_time"]),
+                    "start": state["dispatch"]["start_time"],
+                    "end": state["dispatch"]["end_time"],
                     "label": f"Dispatch, published {to_readable_time(state['published_time'], seconds=False)}",
                 }
                 for dispatch in scenario["dispatches"].values()
                 for state in dispatch["states"]
                 if state["dispatch"]["authorized"] and state["dispatch"]["program"]["id"] == program["id"]
             ],
-            columns=["hour_start", "hour_end", "label"],
+            columns=["start", "end", "label"],
         )
 
-        color_domain = revision_labels + list(dispatched_hours["label"])
-        color_range = REVISION_COLORS[-len(revision_labels) :] + [DISPATCH_COLOR] * len(dispatched_hours)
+        color_domain = revision_labels + list(dispatches["label"])
+        color_range = REVISION_COLORS[-len(revision_labels) :] + [DISPATCH_COLOR] * len(dispatches)
         color = alt.Color(
             "label:N",
             scale=alt.Scale(domain=color_domain, range=color_range),
@@ -656,16 +622,16 @@ def get_forecast_charts():
             )
 
         dispatch_layer = (
-            alt.Chart(dispatched_hours)
+            alt.Chart(dispatches)
             .mark_rect(opacity=0.15)
             .encode(
-                x=time_x("hour_start"),
-                x2="hour_end:T",
+                x=time_x("start"),
+                x2="end:T",
                 color=color,
                 tooltip=[
                     alt.Tooltip("label:N", title=" "),
-                    alt.Tooltip("hour_start:T", format=READABLE_TIME_FORMAT, title="from"),
-                    alt.Tooltip("hour_end:T", format=READABLE_TIME_FORMAT, title="to"),
+                    alt.Tooltip("start:T", format=READABLE_TIME_FORMAT, title="from"),
+                    alt.Tooltip("end:T", format=READABLE_TIME_FORMAT, title="to"),
                 ],
             )
         )
@@ -716,7 +682,7 @@ def get_forecast_charts():
         )
 
     def get_forecast_charts(scenario):
-        """One chart per program: the likelihood each forecast update gives each hour, with dispatched hours shaded."""
+        """One chart per program: the likelihood each forecast update gives each hour, with dispatches shaded."""
         programs_by_id = {forecast["program"]["id"]: forecast["program"] for forecast in scenario["dispatch_forecasts"]}
         now = get_now_notification_time()
         charts = [get_forecast_chart(scenario, program, now) for program in programs_by_id.values()]
