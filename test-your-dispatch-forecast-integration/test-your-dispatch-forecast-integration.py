@@ -98,7 +98,7 @@ with app.setup(hide_code=True):
         headers = " ".join([f"--header '{key}: {val}'" for key, val in headers.items()])
         return f"curl --request GET --url '{url}' {headers}"
 
-    DISPATCH_FORECAST_TUTORIAL_URL = "https://api.voltus.co/docs/"  # Placeholder until the dispatch forecast tutorial is published
+    DISPATCH_FORECAST_TUTORIAL_URL = "https://api.voltus.co/docs/tutorials/dispatching-with-a-battery"
     SANDBOX_URL = "https://sandbox.voltus.co/2022-04-15"
 
     default_tick_interval = 10
