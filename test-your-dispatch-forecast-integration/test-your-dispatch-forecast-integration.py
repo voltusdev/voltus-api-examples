@@ -98,7 +98,7 @@ with app.setup(hide_code=True):
         headers = " ".join([f"--header '{key}: {val}'" for key, val in headers.items()])
         return f"curl --request GET --url '{url}' {headers}"
 
-    DISPATCH_FORECAST_TUTORIAL_URL = "https://api.voltus.co/docs/tutorials/dispatching-with-a-battery"
+    DISPATCH_FORECAST_DOCS_URL = "https://api.voltus.co/docs/concepts/dispatching-with-a-battery"
     SANDBOX_URL = "https://sandbox.voltus.co/2022-04-15"
 
     default_tick_interval = 10
@@ -134,7 +134,7 @@ with app.setup(hide_code=True):
 @app.cell(hide_code=True)
 def _():
     mo.md(f"""
-    Use these scenarios to test how your EMS handles dispatch forecasts in the sandbox. For an overview of how to use dispatch forecasts in your EMS, see the [Voltus API documentation]({DISPATCH_FORECAST_TUTORIAL_URL}).
+    Use these scenarios to test how your EMS handles dispatch forecasts in the sandbox. For an overview of how to use dispatch forecasts in your EMS, see the [Voltus API documentation]({DISPATCH_FORECAST_DOCS_URL}).
 
     **Before you start**: You need a sandbox API key for `sandbox.voltus.co`. If you don't have one, email your Voltus Account Manager or Project Engineer. Use it in place of `{default_api_key}` in the example curl requests below.
     """)
